@@ -17,6 +17,7 @@ LiquidCrystal_I2C lcd(0x27,  16, 2);
 
 void setup() {
   pinMode(RELAY_PIN2, OUTPUT);
+  // digitalWrite(RELAY_PIN2, HIGH); // Ensure relay is OFF initially
   Serial.begin(115200);  
   lcd.init();
   // lcd.begin(16,2);//Defining 16 columns and 2 rows of lcd display
@@ -32,16 +33,29 @@ void setup() {
 }
 
 String data="";
+
+String removeSpaces(String input) {
+  String output = "";
+  for (int i = 0; i < input.length(); i++) {
+    if (input.charAt(i) != ' ') {
+      output += input.charAt(i);
+    }
+  }
+  return output;
+}
+
 void loop() {
   // pinMode(RELAY_PIN2, OUTPUT);
   if (Serial.available()) {
-    // String receivedData = Serial.readString();  // Read data as string
-    // Serial.println("Received Data: " + receivedData);  // Print received data
-    // data=receivedData;
     String receivedData = Serial.readString();  // Read data as string
     Serial.println("Received Data: " + receivedData);
     data = receivedData;
   }
+
+  String noSpaces = removeSpaces(data);
+  Serial.print("scan:");  // Output: HelloWorld!
+  Serial.println(noSpaces);  // Output: HelloWorld!
+
   if(data == ""){
     lcd.setCursor(0,0); //Defining positon to write from first row,first column .
     lcd.print("FREE CHARGE"); //You can write 16 Characters per line .
@@ -51,36 +65,45 @@ void loop() {
     digitalWrite(RELAY_PIN2, HIGH);
     delay(1000);
     lcd.clear();//Clean the screen
-  }else{
+  } else {
 
-    if(data != "INVALID RFID"){
+    if (onoff == false) {
+
+      String str = noSpaces; // Test string
+  
+      // Check if "Yes" is in the string
+      if (str.indexOf("Yes") != -1) {
+      lcd.clear();//Clean the screen
       lcd.setCursor(0,0); //Defining positon to write from first row,first column .
       lcd.print("STUDENT CHARGING"); //You can write 16 Characters per line .
-      delay(1000);//Delay used to give a dynamic effect
       lcd.setCursor(0,1); //Defining positon to write from second row,first column .
-      lcd.print(data);
-
-      // delay(1000);
-
-      // lcd.setCursor(0,0); //Defining positon to write from first row,first column .
-      // lcd.print("FREE CHARGE"); //You can write 16 Characters per line .
-      // delay(1000); //Delay used to give a dynamic effect
-      // lcd.setCursor(0,1); //Defining positon to write from second row,first column .
-      // lcd.print(data);
-      // lcd.clear();//Clean the screen
-
+      lcd.print("VERIFIED!");
       digitalWrite(RELAY_PIN2, LOW);
       onoff=true;
-    }else{
+      Serial.println(data);
+      delay(1000);//Delay used to give a dynamic effect
+      lcd.clear();//Clean the screen
+    } else {
       lcd.setCursor(0,0); //Defining positon to write from first row,first column .
       lcd.print("FREE CHARGE"); //You can write 16 Characters per line .
-      delay(1000); //Delay used to give a dynamic effect
       lcd.setCursor(0,1); //Defining positon to write from second row,first column .
-      lcd.print("INVALID RFID!");
+      lcd.print(data);
+      delay(1000); //Delay used to give a dynamic effect
       lcd.clear();//Clean the screen
+      digitalWrite(RELAY_PIN2, HIGH);  
+      delay(2000); //Delay used to give a dynamic effect
+      data = "";
       onoff=false;
+      Serial.print("INVALID RFID!");
+    }
+
+    if(noSpaces!="Yes" ){
+
+    } else {
+
     }
   }
+}
 
   if (onoff == true) {
     unsigned long currentMillis = millis(); // Get the current time
@@ -109,7 +132,7 @@ void loop() {
       if (seconds < 10) lcd.print("0"); // Add leading zero if needed
       lcd.print(seconds);
       lcd.print("  "); // Extra spaces to clear old characters
-
+      Serial.println("timer");
       if (remainingTime == 0) {
         lcd.clear();
         lcd.setCursor(0, 0);
@@ -125,11 +148,4 @@ void loop() {
   }
   
 }
-
-
-
-
-
-
-
 
